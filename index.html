@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Zion AI Incident Postmortem Generator</title>
+<meta name="description" content="Generate a blameless postmortem for LLM/agent incidents: hallucination, runaway loops, cost spikes, bad tool calls. Free tool by Zion Tech Group.">
+<style>
+:root{--bg:#120a12;--card:#1f1420;--acc:#f472b6;--txt:#f9ecf3;--mut:#c2a0b6}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--txt)}
+header{padding:48px 24px 24px;text-align:center;background:linear-gradient(160deg,#3d1030,#120a12)}
+h1{margin:0 0 8px}.wrap{max-width:920px;margin:0 auto;padding:24px}
+.panel{background:var(--card);border:1px solid #3a2036;border-radius:14px;padding:20px;margin-bottom:20px}
+label{display:block;font-size:.85rem;color:var(--mut);margin:12px 0 4px}
+input,select,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #4a2b44;background:#170d17;color:var(--txt);font-family:inherit}
+textarea{min-height:80px}
+button{margin-top:14px;padding:12px 22px;border:0;border-radius:10px;background:var(--acc);color:#2a0a1e;font-weight:700;cursor:pointer}
+pre{white-space:pre-wrap;background:#150b15;border:1px solid #3a2036;border-radius:12px;padding:16px;font-size:.85rem;max-height:460px;overflow:auto}
+footer{padding:32px 24px;text-align:center;color:var(--mut);font-size:.85rem;border-top:1px solid #2c1a29;margin-top:40px}
+footer a{color:var(--acc);text-decoration:none;margin:0 8px}
+</style>
+</head>
+<body>
+<header><h1>🧯 Zion AI Incident Postmortem Generator</h1>
+<p>Blameless, structured postmortems for AI incidents — hallucinations, runaway agents, cost blowouts, bad tool calls.</p></header>
+<div class="wrap">
+<div class="panel">
+<label>Incident title</label><input id="t" value="Support agent issued incorrect refunds">
+<label>Incident type</label><select id="type"><option>Hallucinated / incorrect output</option><option>Runaway tool loop / cost spike</option><option>Wrong tool call / unintended action</option><option>Data leak / PII exposure</option><option>Latency or availability outage</option><option>Prompt injection succeeded</option></select>
+<label>Severity</label><select id="sev"><option>SEV1 — critical, customer-facing</option><option>SEV2 — major, partial impact</option><option>SEV3 — minor, internal</option></select>
+<label>Detected at → resolved at</label><input id="dur" value="2026-09-14 09:12 UTC → 2026-09-14 11:47 UTC">
+<label>What happened (2–3 sentences)</label><textarea id="what">The support agent applied a refund policy from an outdated Notion page after a retrieval miss, issuing 34 incorrect refunds before a human flagged the pattern.</textarea>
+<label>Impact</label><input id="impact" value="34 incorrect refunds (~$4,100), 2 support escalations">
+<label>Root cause</label><textarea id="root">Stale document in the vector index; no freshness TTL; refund tool had no approval threshold for amounts under $200.</textarea>
+<button onclick="gen()">Generate postmortem</button>
+</div>
+<div class="panel" id="result" style="display:none"><pre id="doc"></pre><button onclick="dl()">Download .md</button></div>
+</div>
+<footer>Part of the <a href="https://ziontechgroup.com">Zion Tech Group</a> AI apps network ·
+<a href="https://ziontechgroup.com/zion-agent-observability/">Agent Observability</a>
+<a href="https://ziontechgroup.com/incident-runbook/">Runbook Generator</a>
+<a href="https://ziontechgroup.com/zion-mcp-security/">MCP Security</a></footer>
+<script>
+const g=id=>document.getElementById(id).value;
+function gen(){
+const d=`# Postmortem: ${g('t')}
+**Type:** ${g('type')} | **Severity:** ${g('sev').split(' ')[0]}
+**Window:** ${g('dur')}
+**Authors:** (add) | **Status:** Draft
+
+## Summary (blameless)
+${g('what')}
+
+> This postmortem focuses on systems and processes, not individuals.
+
+## Impact
+${g('impact')}
+
+## Timeline (UTC)
+- Detection — how the incident surfaced (alert, user report, anomaly)
+- Triage — initial assessment and mitigation started
+- Mitigation — agent disabled / rolled back / traffic shifted
+- Resolution — fix deployed and verified
+- (fill in timestamps from: ${g('dur')})
+
+## Root Cause
+${g('root')}
+
+## Contributing Factors (AI-specific)
+- Retrieval: stale/missing documents, chunking, embedding drift
+- Model: version change, temperature, prompt regression
+- Tools: missing permission scoping or approval thresholds
+- Observability gap: why detection took as long as it did
+
+## What Went Well
+- (e.g., human flagged quickly; kill switch worked)
+
+## What Went Poorly
+- (e.g., no automated loop/runaway detection)
+
+## Action Items
+| # | Action | Owner | Due |
+|---|--------|-------|-----|
+| 1 | Add freshness TTL + re-index policy to RAG pipeline | | |
+| 2 | Approval threshold on refund tool (any amount) | | |
+| 3 | Add regression eval covering refund-policy queries | | |
+| 4 | Add anomaly alert on refund rate per hour | | |
+
+## Lessons Learned
+(What we change in our engineering process going forward)
+
+---
+Generated with Zion AI Incident Postmortem Generator — https://ziontechgroup.com/zion-ai-postmortem/`;
+document.getElementById('doc').textContent=d;document.getElementById('result').style.display='block';window._doc=d;}
+function dl(){const b=new Blob([window._doc],{type:'text/markdown'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='ai-incident-postmortem.md';a.click();}
+</script>
+</body>
+</html>
